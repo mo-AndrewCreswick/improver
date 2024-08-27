@@ -1154,6 +1154,8 @@ class ApplyReliabilityCalibration(PostProcessingPlugin):
             UserWarning: If the probabilities must be sorted to reinstate
                          expected monotonicity following calibration.
         """
+        if not cube.coord_dims(self.threshold_coord):
+            return
         (threshold_dim,) = cube.coord_dims(self.threshold_coord)
         thresholding = probability_is_above_or_below(cube)
         if thresholding is None:
@@ -1224,6 +1226,11 @@ class ApplyReliabilityCalibration(PostProcessingPlugin):
 
         forecast_probability = np.array(forecast_probability_sum / forecast_count)
         observation_frequency = np.array(observation_count / forecast_count)
+
+        # update observation frequency at points with 0 forecast probability.
+        observation_frequency = np.where(forecast_probability == 0, # where prob is 0
+                                         0, # set observation freq to 0
+                                         observation_frequency) # else leave unchanged
 
         return forecast_probability, observation_frequency
 
